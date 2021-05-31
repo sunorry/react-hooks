@@ -1,70 +1,19 @@
-# Getting Started with Create React App
+作用：**逻辑重用、业务分离**
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+使得代码结构更加清晰。痛点eg：需要在组建中监听窗口变化，导致需要在不同生命周期去做事件 on 和 off。
 
-## Available Scripts
+* 2 个核心 Hooks：useState、useEffect
+* 4 个常用内置 Hooks：useCallback、useMemo、useRef、useContext
 
-In the project directory, you can run:
 
-### `yarn start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+为什么创造 Hooks?
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. React 组件之间不会互相继承，也就是没有用到 Class 的特性
+2. UI 由状态驱动，很少在外部调用一个 class 实例（组建方法）。组件的所有方法都在内部调用或作为生命周期被自动调用
+3. 其他：之前的函数组件无法存在内部状态，必须是纯函数，且无法提供完整的生命周期
 
-### `yarn test`
+所以，要达到的目的就是给函数组件加上状态：
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. 函数和对象不同，实例对象无法在多次执行之后保存状态，因此需要一个函数之外的空间保存状态，且能检测变化，从而出发函数的 render
+2. 需要一个机制，保证把外部的数据绑定到函数的执行。变化时，函数能自动重新执行。因此，任何会影响 UI 的外部数据，都可以通过这个机制绑定到 React 的函数组件。（state、URL、windowSize）
