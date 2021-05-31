@@ -1,6 +1,7 @@
 import './App.css';
 import UserList from './UserList'
 import HighResize from './HighResize'
+import HooksResize from './HooksResize'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       </header>
       <UserList />
       <HighResize />
+      <HooksResize />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Effect from './Effect'
 
 const getSize = () => {
   return window.innerWidth > 1000 ? 'large' : 'small'
@@ -20,7 +21,10 @@ const useWindowSize = () => {
 
 const HooksResize = () => {
   const size = useWindowSize()
-  return size === 'small' ? <div>small</div> : <div>large</div>
+  return <div>
+   hooks: {size === 'small' ? 'small' : 'large'}
+   <Effect id={size} />
+  </div>
 }
 
 export default HooksResize

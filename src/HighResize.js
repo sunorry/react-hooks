@@ -38,7 +38,10 @@ const withWindowSize = Component => {
 class MyComponent extends React.Component {
   render() {
     const { size } = this.props
-    return size === 'small' ? <div>small</div> : <div>large</div>
+    return  <>
+      <span>high comp: </span> 
+      {size === 'small' ? 'small' : 'large'}
+    </>
   }
 }
 
