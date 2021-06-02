@@ -74,7 +74,7 @@ function MyComp() {
       // ...
     }, [count])
   }
-  
+
   // 这里可能提前返回组件渲染结果，后面就不能再用 Hooks 了
   if (count === 0) {
     return 'No content';
@@ -82,7 +82,7 @@ function MyComp() {
 
   // 错误：不能将 Hook 放在可能的 return 之后
   const [loading, setLoading] = useState(false);
-  
+
   //...
   return <div>{count}</div>
 }
@@ -93,6 +93,94 @@ function MyComp() {
 
 
 二、只能在函数组件或其他 Hooks 使用
+
+
+**`useCallback` 缓存回调函数**
+问题：每一次 UI 变化，都通过重新执行整个函数来完成，这和 Class 组件有很大区别：函数组件中没有一个直接的方式在多次渲染之间维持一个状态。
+```javascript
+function Counter() {
+  const [count, setCount] = useState(0)
+  const handleIncrement = () => setCount(count + 1)
+  return <button onClick={ handleIncrement }>+</button>
+}
+```
+每次 +1，函数多次渲染，无法重用 `handleIncrement`，每次需要创建一个新的。它里面包含了 `count` 这个变量的闭包，以确保每次都能够得到正确的结果。
+同时意味着，即使 `count` 没有发生变化，但函数因为其他状态发生变化而重新渲染，也会重新生成 `handleIncrement`，虽然不影响结果，但没必要。不仅增加了系统开销，更重要的是：**每次创建新的函数会让接受事件处理函数的组件，需要重新渲染**。
+所以我们需要只有 `count` 发生变化的时，才需要重新定义一个回调函数，这正是 `useCallback` 这个 hook 的作用。
+```javascript
+function Counter() {
+  const [count, setCount] = useState(0)
+  const handleIncrement = useCallback(() => setCount(count + 1), [count])
+  return <button onClick={ handleIncrement }>+</button>
+}
+```
+
+**`useMemo`： 缓存计算的结果**
+某个数据通过其他数据计算得到，那只有当依赖数据改变时才需要重新计算。
+作用：避免自组件重复渲染
+```javascript
+import { useEffect, useMemo, useState } from 'react'
+
+function getUserList() {
+  return new Promise(resolve => {
+    setTimeout(() => resolve([1,2,3,4]), 1000)
+  })
+}
+
+export default function SearchableUser() {
+  const [users, setUsers] = useState(null)
+  const [searchKey, setSearchKey] = useState(null)
+
+  useEffect(() => {
+    async function fetchList() {
+      const list = await getUserList()
+      setUsers(list)
+    }
+    fetchList()
+  }, [])
+
+  // let usersToShow = null
+  // // 只需要在 users 或 searchKey 改变才需要重新计算
+  // if (users) {
+  //   usersToShow = users.filter(user => user.includes(searchKey))
+  // }
+  const usersToShow = useMemo(() => {
+    if (!users) return null
+    return users.filter(user => user.includes(searchKey))
+  }, [searchKey, users])
+
+  return (
+    <div>
+      <input type="text" value={searchKey} onChange={ evt => setSearchKey(evt.target.value) } />
+      <ul>
+        { usersToShow && usersToShow.map(user => <li>{ user }</li>) }
+      </ul>
+    </div>
+  )
+}
+```
+
+如果 `<li>` 换成组件，如果没有 `useMemo`，组件会一直 rerender。
+
+**`useCallback` 的功能可以用 `useMemo` 来实现。
+```javascript
+const myEventHandler = useMemo(() => {
+  return () => {
+
+  }
+}, [dep1, dep2])
+```
+
+**`useCallback` 和 `useMemo` 都是做同一件事的，建立了一个绑定某个结果到依赖数据的关系。只有依赖变了，这个结果才会被重新得到。**
+
+**`useRef`： 在多个渲染之间共享数据、保存 DOM 节点**
+
+**`useContext`: 定义全局状态**
+一个 context 从某个组件为根组件的组件树上可用，是一个 Provider。
+```javascript
+const MyCtx = React.createContext(value)
+```
+
 
 Q: 是任何场景 函数都用useCallback 包裹吗？那种轻量的函数是不是不需要？
 A: 确实不是，useCallback 可以减少不必要的渲染，主要体现在将回调函数作为属性传给某个组件。如果每次都不一样就会造成组件的重新渲染。但是如果你确定子组件多次渲染也没有太大问题，特别是原生的组件，比如 button，那么不用 useCallback 也问题不大。所以这和子组件的实现相关，和函数是否轻量无关。但是比较好的实践是都 useCallback。
