@@ -94,4 +94,32 @@ function MyComp() {
 
 二、只能在函数组件或其他 Hooks 使用
 
-1. 
+Q: 是任何场景 函数都用useCallback 包裹吗？那种轻量的函数是不是不需要？
+A: 确实不是，useCallback 可以减少不必要的渲染，主要体现在将回调函数作为属性传给某个组件。如果每次都不一样就会造成组件的重新渲染。但是如果你确定子组件多次渲染也没有太大问题，特别是原生的组件，比如 button，那么不用 useCallback 也问题不大。所以这和子组件的实现相关，和函数是否轻量无关。但是比较好的实践是都 useCallback。
+
+
+**避免使用 Class 的思路写 Hooks**
+
+引起状态变化的原因只有两个：
+1. 用户操作产生事件，click
+2. 副作用产生的事件，fetch =》 useEffect
+
+```javascript
+class BlogView extends React.Component {
+  componentDidMount() {
+    fetchBlog(this.props.id)
+  }
+  componentDidUpdate(prevProps) {
+    if (provProps.id !== this.props.id) {
+      fetchBlog(this.props.id)
+    }
+  }
+}
+
+function BlogView({ id }) {
+  useEffect(() => {
+    fetchBlog(id)
+  }, [id])
+}
+```
+思考方式是：**当某个状态发生变化时，我要做什么**
