@@ -6,6 +6,10 @@ function BlogView({ id }) {
   useEffect(() => {
     console.log('id change ', id)
     setBlogContent(parseInt(Math.random() * 1000))
+    // id 变化和组件销毁钱执行
+    return () => {
+      console.log('ops')
+    }
   }, [id])
 
   const isLoading = !blogContent

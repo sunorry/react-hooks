@@ -210,4 +210,136 @@ function BlogView({ id }) {
   }, [id])
 }
 ```
-思考方式是：**当某个状态发生变化时，我要做什么**
+思考方式是：**当某个状态发生变化时，我要做什么**。忘记生命周期。
+
+构造函数的本质，在其他代码执行之前做初始化工作。换而言之我们要实现一次性执行的代码。
+```javascript
+import { useRef } from 'react'
+function useSingleton(cb) {
+  const isCalled = useRef(false)
+  !isCalled.current && cb()
+  isCalled.current = true
+}
+```
+
+* `useEffect(cb)` 只有在 dep 改变时才执行。传统的 `componentDidUpdate` 则一定会执行，我们需要手动判断某个状态是否有变化
+* `useEffect` 返回的函数在**下一次 dep 发生变化以及组件销毁执行**，但 `componentWillUnmount` 只有组件销毁时才会执行。如果要完全实现，只需 `useEffect` 的 deps 为 `[]` 即可
+```javascript
+import comments from './comments'
+
+function BlogView({ id }) {
+  const handleCommentsChange = useCallback(() => {
+    // xxx
+  }, [])
+
+  useEffect(() => {
+    fetchBlog(id)
+    const listener = comments.addListener(id, handleCommentsChange)
+
+    // id change 也会执行，清理上一次 Effect 的执行效果
+    return () => {
+      comments.removeListener(listener)
+    }
+  }, [id, handleCommentsChange])
+}
+```
+
+**自定义 Hooks：封装通用逻辑，useAsync**
+利用 Hooks 能够管理 React 组件状态的能力，将组件中某部分状态独立出来，从而实现通用逻辑的重用。
+```javascript
+import { useState, useCallback } from 'react'
+
+export default function useAsync(asyncFn) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const execute = useCallback(() => {
+    setLoading(true)
+    setData(null)
+    setError(null)
+    return asyncFn()
+      .then(res => {
+        setData(res)
+        setLoading(false)
+      })
+      .catch(error => {
+        setError(error)
+        setLoading(false)
+      })
+  }, [asyncFn])
+
+  return {
+    execute,
+    loading,
+    data,
+    error
+  }
+}
+```
+
+业务使用
+```javascript
+const {
+  execute: fetchUsers,
+  data: users,
+  loading,
+  error
+} = useAsync(async () => {
+  const res = await fetch('xxx')
+  const json = await res.json()
+  return json.data
+})
+```
+和封装一个工具类不同之处：Hooks 可以管理 state。
+
+**监听浏览器状态：useScroll**
+Hooks 好处是：可以让 React 组件绑定到任何可能的数据源上。当数据源改变时，组件能够自动更新。
+
+```javascript
+import { useEffect, useState } from 'react'
+
+const getPosition = () => {
+  return {
+    x: document.body.scrollLeft,
+    y: document.body.scrollTop
+  }
+}
+
+const useScroll = () => {
+  const [position, setPosition] = useState(getPosition())
+  useEffect(() => {
+    const handler = () => {
+      setPosition(getPosition())
+    }
+    document.body.addEventListener('scroll', handler)
+
+    return () => {
+      document.body.removeEventListener('scroll', handler)
+    }
+  }, [])
+
+  return position
+}
+
+// biz
+function ScrollTop() {
+  const { y } = useScroll()
+
+  const go2Top = useCallback(() => {
+    document.body.scrollTop = 0
+  }, [])
+
+  if (y > 30) {
+    return (
+      <button onClick={ go2Top }>go2Top</button>
+    )
+  }
+  return ull
+}
+```
+
+同理 cookies、localStorage、URL 都可以用这样的方式来实现。
+
+**拆分复杂组件**
+尽量将相关的逻辑做成独立的 Hooks，然后在函数中使用这些 Hooks，通过参数传递和返回值让 Hooks 之间完成交互。
+拆分逻辑不一定为了重用，而可以是仅仅为了业务逻辑的隔离。所以可以把文件都写在一块，方便阅读和理解。
