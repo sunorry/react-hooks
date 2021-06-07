@@ -343,3 +343,17 @@ function ScrollTop() {
 **拆分复杂组件**
 尽量将相关的逻辑做成独立的 Hooks，然后在函数中使用这些 Hooks，通过参数传递和返回值让 Hooks 之间完成交互。
 拆分逻辑不一定为了重用，而可以是仅仅为了业务逻辑的隔离。所以可以把文件都写在一块，方便阅读和理解。
+
+**Redux**
+* Redux Store 是全局唯一
+* Redux Store 是树状结构，可天然映射到组件数结构，虽然不是必须的
+
+基础概念
+1. State 即 Store，纯 js 对象
+2. Action 也是一个 Object，用于描述发生的动作
+3. Reducer 则是一个函数，接收 Action 和 State 作为参数，通过计算得到新的 Store
+
+Reducer（State + Action） = New State。
+这样保证数据的不可变性（Immutable），同时
+1. 可预测性：即给定一个初始状态和一系列 Action，一定可以得到一致的结果
+2. 易于调试：可跟踪 Store 中数据变化，甚至回放或暂停。
