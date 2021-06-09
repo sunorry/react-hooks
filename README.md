@@ -345,6 +345,7 @@ function ScrollTop() {
 拆分逻辑不一定为了重用，而可以是仅仅为了业务逻辑的隔离。所以可以把文件都写在一块，方便阅读和理解。
 
 **Redux**
+保证组件之间能够共享状态。
 * Redux Store 是全局唯一
 * Redux Store 是树状结构，可天然映射到组件数结构，虽然不是必须的
 
@@ -357,3 +358,29 @@ Reducer（State + Action） = New State。
 这样保证数据的不可变性（Immutable），同时
 1. 可预测性：即给定一个初始状态和一系列 Action，一定可以得到一致的结果
 2. 易于调试：可跟踪 Store 中数据变化，甚至回放或暂停。
+
+```javascript
+import { createStore } from 'redux'
+const initialState = { value: 0 }
+
+// reducer 处理 action 返回新 state
+function counterReducer(state = initialState, action) {
+  switch (action.type) {
+    case 'counter/incremented':
+      return { value: state.value + 1 } // 返回新对象
+    case 'counter/decremented':
+        return { value: state.value - 1 }
+    default:
+      return state
+  }
+}
+
+const store = createStore(counterReducer)
+store.subscribe(() => console.log(store.getState()))
+
+const incrementAction = { type: 'counter/incremented' }
+store.dispatch(incrementAction)
+
+const decrementAction = { type: 'counter/decremented' }
+store.dispatch(decrementAction)
+```
